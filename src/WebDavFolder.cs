@@ -10,9 +10,18 @@ public partial class WebDavFolder :
     IGetFirstByName,
     IGetItemRecursive,
     ICreateRenamedCopyOf,
-    IMoveRenamedFrom
+    IMoveRenamedFrom,
+    ICreatedAtOffset,
+    ILastAccessedAtOffset,
+    ILastModifiedAtOffset
 {
     internal readonly IWebDavClient _webDavClient;
+    private ICreatedAtProperty? _createdAt;
+    private ICreatedAtOffsetProperty? _createdAtOffset;
+    private ILastAccessedAtProperty? _lastAccessedAt;
+    private ILastAccessedAtOffsetProperty? _lastAccessedAtOffset;
+    private ILastModifiedAtProperty? _lastModifiedAt;
+    private ILastModifiedAtOffsetProperty? _lastModifiedAtOffset;
 
     public WebDavFolder(IWebDavClient webDavClient, string path)
     {
@@ -25,6 +34,18 @@ public partial class WebDavFolder :
     public string Id => Path;
 
     public string Path { get; }
+
+    public ICreatedAtProperty CreatedAt => _createdAt ??= new WebDavCreatedAtProperty(this, _webDavClient, Path);
+
+    public ICreatedAtOffsetProperty CreatedAtOffset => _createdAtOffset ??= new WebDavCreatedAtOffsetProperty(this, _webDavClient, Path);
+
+    public ILastAccessedAtProperty LastAccessedAt => _lastAccessedAt ??= new WebDavLastAccessedAtProperty(this, _webDavClient, Path);
+
+    public ILastAccessedAtOffsetProperty LastAccessedAtOffset => _lastAccessedAtOffset ??= new WebDavLastAccessedAtOffsetProperty(this, _webDavClient, Path);
+
+    public ILastModifiedAtProperty LastModifiedAt => _lastModifiedAt ??= new WebDavLastModifiedAtProperty(this, _webDavClient, Path);
+
+    public ILastModifiedAtOffsetProperty LastModifiedAtOffset => _lastModifiedAtOffset ??= new WebDavLastModifiedAtOffsetProperty(this, _webDavClient, Path);
 
     public Task<IChildFile> CreateCopyOfAsync(IFile fileToCopy, bool overwrite, CancellationToken cancellationToken, CreateCopyOfDelegate fallback)
     {
@@ -44,15 +65,15 @@ public partial class WebDavFolder :
             {
                 Overwrite = overwrite,
                 CancellationToken = cancellationToken
-            });
+            }).ConfigureAwait(false);
 
             if (response.IsSuccessful)
             {
-                return await WebDavFile.GetFromWebDavPathAsync(_webDavClient, targetPath, cancellationToken);
+                return await WebDavFile.GetFromWebDavPathAsync(_webDavClient, targetPath, cancellationToken).ConfigureAwait(false);
             }
         }
 
-        return await CreateCopyOfInteroperableAsync(fileToCopy, overwrite, newName, fallback, cancellationToken);
+        return await CreateCopyOfInteroperableAsync(fileToCopy, overwrite, newName, fallback, cancellationToken).ConfigureAwait(false);
     }
 
     public Task<IChildFile> MoveFromAsync(IChildFile fileToMove, IModifiableFolder source, bool overwrite, CancellationToken cancellationToken, MoveFromDelegate fallback)
@@ -75,13 +96,13 @@ public partial class WebDavFolder :
             {
                 Overwrite = overwrite,
                 CancellationToken = cancellationToken
-            });
+            }).ConfigureAwait(false);
 
             if (response.IsSuccessful)
-                return await WebDavFile.GetFromWebDavPathAsync(_webDavClient, targetPath, cancellationToken);
+                return await WebDavFile.GetFromWebDavPathAsync(_webDavClient, targetPath, cancellationToken).ConfigureAwait(false);
         }
 
-        return await MoveFromInteroperableAsync(source, fileToMove, overwrite, newName, fallback, cancellationToken);
+        return await MoveFromInteroperableAsync(source, fileToMove, overwrite, newName, fallback, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<IChildFile> CreateFileAsync(string name, bool overwrite = false, CancellationToken cancellationToken = default)
@@ -90,16 +111,16 @@ public partial class WebDavFolder :
 
         var filePath = WebDavHelpers.CombinePath(Path, name);
 
-        if (!overwrite && await _webDavClient.GetStorableFromPathAsync(filePath, cancellationToken) is not null)
+        if (!overwrite && await _webDavClient.GetStorableFromPathAsync(filePath, cancellationToken).ConfigureAwait(false) is not null)
             throw new FileAlreadyExistsException("Destination file already exists.");
 
         using var empty = new MemoryStream(Array.Empty<byte>());
-        var response = await _webDavClient.PutFile(filePath, empty, new PutFileParameters { CancellationToken = cancellationToken });
+        var response = await _webDavClient.PutFile(filePath, empty, new PutFileParameters { CancellationToken = cancellationToken }).ConfigureAwait(false);
 
         if (!response.IsSuccessful)
             throw new IOException($"Failed to create file \"{filePath}\". Status code: {response.StatusCode}.");
 
-        return await WebDavFile.GetFromWebDavPathAsync(_webDavClient, filePath, cancellationToken);
+        return await WebDavFile.GetFromWebDavPathAsync(_webDavClient, filePath, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<IChildFolder> CreateFolderAsync(string name, bool overwrite = false, CancellationToken cancellationToken = default)
@@ -107,29 +128,29 @@ public partial class WebDavFolder :
         cancellationToken.ThrowIfCancellationRequested();
 
         var folderPath = WebDavHelpers.CombinePath(Path, name);
-        var existing = await _webDavClient.GetStorableFromPathAsync(folderPath, cancellationToken);
+        var existing = await _webDavClient.GetStorableFromPathAsync(folderPath, cancellationToken).ConfigureAwait(false);
 
         if (existing is IChildFolder existingFolder)
         {
             if (!overwrite)
                 return existingFolder;
 
-            await DeleteAsync(existingFolder, cancellationToken);
+            await DeleteAsync(existingFolder, cancellationToken).ConfigureAwait(false);
         }
 
-        var response = await _webDavClient.Mkcol(folderPath, new MkColParameters { CancellationToken = cancellationToken });
+        var response = await _webDavClient.Mkcol(folderPath, new MkColParameters { CancellationToken = cancellationToken }).ConfigureAwait(false);
 
         if (!response.IsSuccessful)
             throw new IOException($"Failed to create folder \"{folderPath}\". Status code: {response.StatusCode}.");
 
-        return await WebDavFolder.GetFromWebDavPathAsync(_webDavClient, folderPath, cancellationToken);
+        return await WebDavFolder.GetFromWebDavPathAsync(_webDavClient, folderPath, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task DeleteAsync(IStorableChild item, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var response = await _webDavClient.Delete(item.Id, new DeleteParameters { CancellationToken = cancellationToken });
+        var response = await _webDavClient.Delete(item.Id, new DeleteParameters { CancellationToken = cancellationToken }).ConfigureAwait(false);
 
         if (!response.IsSuccessful)
             throw new IOException($"Failed to delete item \"{item.Id}\". Status code: {response.StatusCode}.");
@@ -154,7 +175,7 @@ public partial class WebDavFolder :
         if (!normalizedId.StartsWith(Path == "/" ? "/" : Path + "/", StringComparison.Ordinal) && normalizedId != Path)
             throw new FileNotFoundException("The provided Id does not belong to an item in this folder.");
 
-        var item = await _webDavClient.GetStorableFromPathAsync(normalizedId, cancellationToken)
+        var item = await _webDavClient.GetStorableFromPathAsync(normalizedId, cancellationToken).ConfigureAwait(false)
             ?? throw new FileNotFoundException($"Could not find item with path \"{id}\".");
 
         return item as IStorableChild ?? throw new FileNotFoundException($"Could not find item with path \"{id}\".");
@@ -176,7 +197,7 @@ public partial class WebDavFolder :
         {
             ApplyTo = ApplyTo.Propfind.ResourceAndChildren,
             CancellationToken = cancellationToken
-        });
+        }).ConfigureAwait(false);
 
         if (!response.IsSuccessful)
             yield break;
@@ -212,7 +233,7 @@ public partial class WebDavFolder :
         if (string.IsNullOrEmpty(parentPath))
             return null;
 
-        var item = await _webDavClient.GetStorableFromPathAsync(parentPath, cancellationToken);
+        var item = await _webDavClient.GetStorableFromPathAsync(parentPath, cancellationToken).ConfigureAwait(false);
 
         return item as IFolder;
     }

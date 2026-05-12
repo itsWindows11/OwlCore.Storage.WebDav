@@ -4,8 +4,17 @@ using WebDav;
 namespace OwlCore.Storage.WebDav;
 
 public partial class WebDavFile : IChildFile
+    , ICreatedAtOffset
+    , ILastAccessedAtOffset
+    , ILastModifiedAtOffset
 {
     internal readonly IWebDavClient _webDavClient;
+    private ICreatedAtProperty? _createdAt;
+    private ICreatedAtOffsetProperty? _createdAtOffset;
+    private ILastAccessedAtProperty? _lastAccessedAt;
+    private ILastAccessedAtOffsetProperty? _lastAccessedAtOffset;
+    private ILastModifiedAtProperty? _lastModifiedAt;
+    private ILastModifiedAtOffsetProperty? _lastModifiedAtOffset;
 
     public WebDavFile(IWebDavClient webDavClient, string path)
     {
@@ -19,6 +28,18 @@ public partial class WebDavFile : IChildFile
 
     public string Name => global::System.IO.Path.GetFileName(Path);
 
+    public ICreatedAtProperty CreatedAt => _createdAt ??= new WebDavCreatedAtProperty(this, _webDavClient, Path);
+
+    public ICreatedAtOffsetProperty CreatedAtOffset => _createdAtOffset ??= new WebDavCreatedAtOffsetProperty(this, _webDavClient, Path);
+
+    public ILastAccessedAtProperty LastAccessedAt => _lastAccessedAt ??= new WebDavLastAccessedAtProperty(this, _webDavClient, Path);
+
+    public ILastAccessedAtOffsetProperty LastAccessedAtOffset => _lastAccessedAtOffset ??= new WebDavLastAccessedAtOffsetProperty(this, _webDavClient, Path);
+
+    public ILastModifiedAtProperty LastModifiedAt => _lastModifiedAt ??= new WebDavLastModifiedAtProperty(this, _webDavClient, Path);
+
+    public ILastModifiedAtOffsetProperty LastModifiedAtOffset => _lastModifiedAtOffset ??= new WebDavLastModifiedAtOffsetProperty(this, _webDavClient, Path);
+
     public async Task<IFolder?> GetParentAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -28,7 +49,7 @@ public partial class WebDavFile : IChildFile
         if (string.IsNullOrEmpty(parentPath))
             return null;
 
-        var item = await _webDavClient.GetStorableFromPathAsync(parentPath, cancellationToken);
+        var item = await _webDavClient.GetStorableFromPathAsync(parentPath, cancellationToken).ConfigureAwait(false);
 
         return item as IFolder;
     }
@@ -41,7 +62,7 @@ public partial class WebDavFile : IChildFile
         {
             case FileAccess.Read:
                 {
-                    var response = await _webDavClient.GetRawFile(Path, new GetFileParameters { CancellationToken = cancellationToken });
+                    var response = await _webDavClient.GetRawFile(Path, new GetFileParameters { CancellationToken = cancellationToken }).ConfigureAwait(false);
 
                     if (!response.IsSuccessful)
                     {
@@ -55,7 +76,7 @@ public partial class WebDavFile : IChildFile
                 return new WebDavWriteBackStream(_webDavClient, Path, cancellationToken);
             case FileAccess.ReadWrite:
                 {
-                    var readResponse = await _webDavClient.GetRawFile(Path, new GetFileParameters { CancellationToken = cancellationToken });
+                    var readResponse = await _webDavClient.GetRawFile(Path, new GetFileParameters { CancellationToken = cancellationToken }).ConfigureAwait(false);
 
                     if (!readResponse.IsSuccessful)
                     {
@@ -94,7 +115,7 @@ internal sealed class WebDavWriteBackStream : MemoryStream
     }
 
 #if NETSTANDARD2_0
-    public new ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         FlushToRemoteAsync().GetAwaiter().GetResult();
         base.Dispose();
@@ -103,8 +124,8 @@ internal sealed class WebDavWriteBackStream : MemoryStream
 #else
     public override async ValueTask DisposeAsync()
     {
-        await FlushToRemoteAsync();
-        await base.DisposeAsync();
+        await FlushToRemoteAsync().ConfigureAwait(false);
+        await base.DisposeAsync().ConfigureAwait(false);
     }
 #endif
 
@@ -114,7 +135,7 @@ internal sealed class WebDavWriteBackStream : MemoryStream
             return;
 
         Position = 0;
-        var response = await _client.PutFile(_path, this, new PutFileParameters { CancellationToken = _cancellationToken });
+        var response = await _client.PutFile(_path, this, new PutFileParameters { CancellationToken = _cancellationToken }).ConfigureAwait(false);
 
         if (!response.IsSuccessful)
             throw new IOException($"Failed to write file. Status code: {response.StatusCode}.");

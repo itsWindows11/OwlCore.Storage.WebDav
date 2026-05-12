@@ -6,7 +6,7 @@ public partial class WebDavFile
 {
     public static async Task<WebDavFile> GetFromWebDavPathAsync(IWebDavClient webDavClient, string path, CancellationToken cancellationToken = default)
     {
-        var file = await TryGetFromWebDavPathAsync(webDavClient, path, cancellationToken);
+        var file = await TryGetFromWebDavPathAsync(webDavClient, path, cancellationToken).ConfigureAwait(false);
 
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -27,7 +27,7 @@ public partial class WebDavFile
                 throw new FormatException($"Provided path contains invalid character '{c}'.");
         }
 
-        var item = await webDavClient.GetStorableFromPathAsync(path, cancellationToken);
+        var item = await webDavClient.GetStorableFromPathAsync(path, cancellationToken).ConfigureAwait(false);
 
         return item as WebDavFile;
     }
