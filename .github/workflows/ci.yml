@@ -53,5 +53,8 @@ jobs:
             9.0.x
             8.0.x
 
+      - name: Restore
+        run: dotnet restore OwlCore.Storage.WebDav.slnx
+
       - name: Test
-        run: dotnet test OwlCore.Storage.WebDav.slnx -c Release
+        run: dotnet test OwlCore.Storage.WebDav.slnx -c Release --no-restore
