@@ -8,7 +8,7 @@
 
     <PackageId>OwlCore.Storage.WebDav</PackageId>
     <Version>0.1.0</Version>
-    <Authors>itsWindows11</Authors>
+    <Authors>itsWindows11, Arlodotdll</Authors>
     <Company>OwlCore.Storage.WebDav</Company>
     <Product>OwlCore.Storage.WebDav</Product>
     <Description>An OwlCore.Storage-based library that provides a full-featured implementation for WebDAV, built on top of WebDavClient.</Description>
