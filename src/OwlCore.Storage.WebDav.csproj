@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net9.0;net8.0;netstandard2.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <PackageId>OwlCore.Storage.WebDav</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>itsWindows11</Authors>
+    <Company>OwlCore.Storage.WebDav</Company>
+    <Product>OwlCore.Storage.WebDav</Product>
+    <Description>An OwlCore.Storage-based library that provides a full-featured implementation for WebDAV, built on top of WebDavClient.</Description>
+    <Summary>OwlCore.Storage implementation for WebDAV, built on WebDavClient.</Summary>
+    <PackageTags>webdav;owlcore;storage;dav;network-storage</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/itsWindows11/OwlCore.Storage.WebDav</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/itsWindows11/OwlCore.Storage.WebDav</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Copyright>Copyright © 2026 itsWindows11</Copyright>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.11.74" />
+    <PackageReference Include="OwlCore.Storage" Version="0.15.0" />
+    <PackageReference Include="WebDav.Client" Version="2.9.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="PolySharp" Version="1.14.1" PrivateAssets="All" IncludeAssets="runtime;build;native;contentfiles;analyzers" />
+    <PackageReference Include="System.Memory" Version="4.6.3" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.4" />
+  </ItemGroup>
+
+</Project>

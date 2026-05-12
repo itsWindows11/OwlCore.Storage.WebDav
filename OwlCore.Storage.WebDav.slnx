@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/OwlCore.Storage.WebDav.csproj" />
+  <Project Path="tests/OwlCore.Storage.WebDav.Tests/OwlCore.Storage.WebDav.Tests.csproj" />
+</Solution>
