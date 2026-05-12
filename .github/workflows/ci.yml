@@ -39,6 +39,7 @@ jobs:
         run: dotnet build src/OwlCore.Storage.WebDav.csproj -c Release --no-restore --framework ${{ matrix.tfm }}
 
   test:
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
