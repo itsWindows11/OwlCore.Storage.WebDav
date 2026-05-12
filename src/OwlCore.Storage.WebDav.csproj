@@ -7,7 +7,7 @@
     <LangVersion>latest</LangVersion>
 
     <PackageId>OwlCore.Storage.WebDav</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>itsWindows11, Arlodotdll</Authors>
     <Company>OwlCore.Storage.WebDav</Company>
     <Product>OwlCore.Storage.WebDav</Product>
@@ -19,6 +19,11 @@
     <RepositoryUrl>https://github.com/itsWindows11/OwlCore.Storage.WebDav</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>[0.1.1]
+Extend tests to CommonIFileTests/CommonIFolderTests and fix related issues.
+
+[0.1.0]
+Initial release.</PackageReleaseNotes>
     <Copyright>Copyright © 2026 itsWindows11</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <IncludeSymbols>true</IncludeSymbols>

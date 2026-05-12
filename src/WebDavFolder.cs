@@ -193,6 +193,9 @@ public partial class WebDavFolder :
         if (type == StorableType.None)
             throw new ArgumentOutOfRangeException(nameof(type), $"{nameof(StorableType)}.{type} is not valid here.");
 
+        var includeFiles = type == StorableType.All || type.HasFlag(StorableType.File);
+        var includeFolders = type == StorableType.All || type.HasFlag(StorableType.Folder);
+
         var response = await _webDavClient.Propfind(Path, new PropfindParameters
         {
             ApplyTo = ApplyTo.Propfind.ResourceAndChildren,
@@ -213,13 +216,13 @@ public partial class WebDavFolder :
 
             if (resource.IsCollection)
             {
-                if (type is StorableType.All or StorableType.Folder)
+                if (includeFolders)
                     yield return new WebDavFolder(_webDavClient, resourcePath);
 
                 continue;
             }
 
-            if (type is StorableType.All or StorableType.File)
+            if (includeFiles)
                 yield return new WebDavFile(_webDavClient, resourcePath);
         }
     }
